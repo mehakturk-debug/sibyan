@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sıbyan Mektebi Takip Sistemi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #0f1a14;
+    --surface: #172010;
+    --surface2: #1e2d18;
+    --border: #2d4a22;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --green: #4a8c3f;
+    --green-light: #6ab85e;
+    --green-pale: #c8e6c9;
+    --red: #c0392b;
+    --orange: #e67e22;
+    --blue: #2980b9;
+    --text: #e8e0d0;
+    --text-muted: #a09880;
+    --white: #f5f0e8;
+    --radius: 10px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ===== LOGIN ===== */
+  #loginScreen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #1a2d14 0%, #0a1008 100%);
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    border-radius: 16px;
+    padding: 50px 40px;
+    width: 380px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(201,168,76,0.15);
+  }
+  .login-logo { font-size: 48px; margin-bottom: 10px; }
+  .login-title {
+    font-family: 'Amiri', serif;
+    font-size: 24px;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .login-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 30px; }
+  .login-box input {
+    width: 100%; padding: 12px 16px; margin-bottom: 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-size: 15px;
+  }
+  .login-box input:focus { outline: none; border-color: var(--gold); }
+  .btn-login {
+    width: 100%; padding: 13px; background: var(--gold);
+    border: none; border-radius: var(--radius); color: var(--bg);
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: 'Tajawal', sans-serif; transition: .2s;
+  }
+  .btn-login:hover { background: var(--gold-light); }
+  .login-err { color: var(--red); font-size: 13px; margin-top: 10px; }
+
+  /* ===== APP LAYOUT ===== */
+  #appScreen { display: none; height: 100vh; flex-direction: column; }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 20px; height: 56px; gap: 8px; flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  }
+  .topbar-title {
+    font-family: 'Amiri', serif; font-size: 18px;
+    color: var(--gold); flex: 1;
+  }
+  .nav-btn {
+    padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    font-family: 'Tajawal', sans-serif; font-size: 13px; transition: .2s;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .nav-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .nav-btn.tv-btn {
+    background: var(--gold); border-color: var(--gold);
+    color: var(--bg); font-weight: 700;
+  }
+  .btn-logout {
+    padding: 7px 12px; border-radius: 8px; border: 1px solid var(--red);
+    background: transparent; color: var(--red); cursor: pointer;
+    font-size: 13px; font-family: 'Tajawal', sans-serif;
+  }
+
+  /* MAIN AREA */
+  .main-area { flex: 1; overflow: hidden; display: flex; }
+  .page { display: none; flex: 1; overflow-y: auto; padding: 24px; }
+  .page.active { display: block; }
+
+  /* ===== COMMON COMPONENTS ===== */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-title {
+    font-family: 'Amiri', serif; font-size: 22px; color: var(--gold);
+  }
+  .btn {
+    padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer;
+    font-family: 'Tajawal', sans-serif; font-size: 14px; transition: .2s;
+  }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover { background: var(--green-light); }
+  .btn-gold { background: var(--gold); color: var(--bg); font-weight: 700; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+  }
+  .card-title { font-size: 15px; color: var(--gold); margin-bottom: 12px; font-weight: 600; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'Tajawal', sans-serif;
+    font-size: 14px;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--gold);
+  }
+  .form-group select option { background: var(--surface2); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.75);
+    display: none; align-items: center; justify-content: center; z-index: 1000;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px; width: 600px; max-width: 95vw;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  }
+  .modal-title {
+    font-family: 'Amiri', serif; font-size: 20px; color: var(--gold);
+    margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--surface2); color: var(--gold); padding: 10px 12px;
+    text-align: left; border-bottom: 1px solid var(--border);
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* STAT CARDS */
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; text-align: center;
+  }
+  .stat-num { font-size: 32px; font-weight: 700; color: var(--gold); }
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  /* PHOTO UPLOAD */
+  .photo-upload-area {
+    border: 2px dashed var(--border); border-radius: 10px;
+    padding: 20px; text-align: center; cursor: pointer;
+    transition: .2s; position: relative;
+  }
+  .photo-upload-area:hover { border-color: var(--gold); }
+  .photo-preview {
+    width: 80px; height: 80px; border-radius: 50%;
+    object-fit: cover; border: 2px solid var(--gold); margin: 0 auto 8px;
+    display: block;
+  }
+  .photo-placeholder { font-size: 40px; margin-bottom: 8px; }
+
+  /* STUDENT CARD */
+  .student-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; text-align: center;
+    transition: .2s; cursor: pointer;
+  }
+  .student-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .student-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    object-fit: cover; border: 2px solid var(--gold); margin: 0 auto 10px;
+    display: block;
+  }
+  .student-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .student-class { font-size: 12px; color: var(--text-muted); }
+
+  /* ATTENDANCE */
+  .att-status {
+    padding: 4px 10px; border-radius: 20px; font-size: 12px;
+    border: none; cursor: pointer; font-family: 'Tajawal', sans-serif;
+  }
+  .att-present { background: #1e4d2b; color: #6ab85e; }
+  .att-absent { background: #4d1e1e; color: #e74c3c; }
+  .att-excused { background: #4d3d1e; color: #e67e22; }
+  .att-sick { background: #1e3a4d; color: #3498db; }
+  .att-none { background: var(--surface2); color: var(--text-muted); }
+
+  /* POINTS */
+  .point-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .point-badge.gold { background: #4d3d00; color: var(--gold); }
+  .point-badge.green { background: #1e3d1e; color: var(--green-light); }
+
+  /* LEADERBOARD */
+  .rank-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px; background: var(--surface2);
+    border-radius: 10px; margin-bottom: 8px; transition: .2s;
+  }
+  .rank-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .rank-1 { background: var(--gold); color: var(--bg); }
+  .rank-2 { background: #aaa; color: var(--bg); }
+  .rank-3 { background: #cd7f32; color: var(--bg); }
+  .rank-other { background: var(--border); color: var(--text-muted); }
+  .rank-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    object-fit: cover; border: 2px solid var(--border);
+  }
+  .rank-info { flex: 1; }
+  .rank-name { font-size: 14px; font-weight: 600; }
+  .rank-pts { font-size: 12px; color: var(--gold); }
+
+  /* TV SCREEN */
+  #tvScreen {
+    display: none;
+    position: fixed; inset: 0; background: #000;
+    z-index: 2000; overflow: hidden;
+  }
+  .tv-content {
+    width: 100%; height: 100%; display: flex;
+    flex-direction: column; background: linear-gradient(135deg, #0a1f0a 0%, #0f2b1a 50%, #0a1f0a 100%);
+    color: var(--white);
+  }
+  .tv-header {
+    padding: 20px 40px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(201,168,76,.3);
+  }
+  .tv-school-name {
+    font-family: 'Amiri', serif; font-size: 28px; color: var(--gold);
+  }
+  .tv-date { font-size: 16px; color: var(--text-muted); }
+  .tv-close {
+    position: fixed; top: 14px; right: 14px;
+    background: rgba(0,0,0,.6); border: 1px solid var(--border);
+    color: var(--text-muted); padding: 8px 14px; border-radius: 8px;
+    cursor: pointer; z-index: 2001; font-size: 13px;
+  }
+  .tv-body {
+    flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px; padding: 24px 40px;
+  }
+  .tv-panel {
+    background: rgba(255,255,255,.04); border: 1px solid rgba(201,168,76,.2);
+    border-radius: 14px; padding: 20px; overflow: hidden;
+  }
+  .tv-panel-title {
+    font-family: 'Amiri', serif; font-size: 20px; color: var(--gold);
+    margin-bottom: 16px; text-align: center;
+    padding-bottom: 10px; border-bottom: 1px solid rgba(201,168,76,.2);
+  }
+  .tv-student-hero {
+    text-align: center; padding: 10px;
+  }
+  .tv-hero-avatar {
+    width: 120px; height: 120px; border-radius: 50%;
+    object-fit: cover; border: 4px solid var(--gold);
+    margin: 0 auto 12px; display: block;
+    box-shadow: 0 0 30px rgba(201,168,76,.4);
+  }
+  .tv-hero-name {
+    font-family: 'Amiri', serif; font-size: 24px; color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .tv-hero-pts { font-size: 16px; color: var(--text-muted); }
+  .tv-badge {
+    display: inline-block; background: var(--gold); color: var(--bg);
+    padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .tv-program-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .tv-time { color: var(--gold); font-size: 13px; min-width: 50px; }
+  .tv-act { font-size: 13px; }
+  .tv-event-item {
+    padding: 8px 12px; background: rgba(255,255,255,.04);
+    border-radius: 8px; margin-bottom: 8px; font-size: 13px;
+  }
+  .tv-ticker {
+    background: rgba(201,168,76,.15); border-top: 1px solid rgba(201,168,76,.3);
+    padding: 8px 40px; font-size: 14px; color: var(--gold-light);
+    white-space: nowrap; overflow: hidden;
+  }
+  .tv-ticker-inner {
+    display: inline-block;
+    animation: ticker 30s linear infinite;
+  }
+  @keyframes ticker { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
+
+  /* CURRICULUM */
+  .week-tab {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    font-family: 'Tajawal', sans-serif; font-size: 13px;
+  }
+  .week-tab.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .lesson-check {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; background: var(--surface2);
+    border-radius: 8px; margin-bottom: 6px;
+  }
+  .lesson-check input[type=checkbox] {
+    width: 18px; height: 18px; cursor: pointer; accent-color: var(--green);
+  }
+  .lesson-check label { font-size: 14px; cursor: pointer; flex: 1; }
+  .lesson-check .done { text-decoration: line-through; color: var(--text-muted); }
+
+  /* BADGES */
+  .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #1e3d1e; color: var(--green-light); }
+  .badge-gold { background: #3d2e00; color: var(--gold); }
+  .badge-red { background: #3d1e1e; color: #e74c3c; }
+  .badge-blue { background: #1e2e3d; color: #5dade2; }
+
+  /* NOTIFICATION */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--green); color: #fff;
+    padding: 12px 20px; border-radius: 10px;
+    font-size: 14px; z-index: 9999; display: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    animation: slideIn .3s ease;
+  }
+  @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab {
+    padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    font-family: 'Tajawal', sans-serif; font-size: 13px;
+  }
+  .tab.active { background: var(--green); border-color: var(--green); color: #fff; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .text-gold { color: var(--gold); }
+  .text-muted { color: var(--text-muted); }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mt-16 { margin-top: 16px; }
+  .fw-600 { font-weight: 600; }
+  .fs-13 { font-size: 13px; }
+  .text-center { text-align: center; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
+    .topbar { overflow-x: auto; }
+    .nav-btn { font-size: 11px; padding: 6px 10px; }
+    .tv-body { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🕌</div>
+    <div class="login-title">Sıbyan Mektebi</div>
+    <div class="login-sub">Öğrenci Takip Sistemi</div>
+    <input type="text" id="loginUser" placeholder="Kullanıcı Adı" />
+    <input type="password" id="loginPass" placeholder="Şifre" />
+    <button class="btn-login" onclick="doLogin()">Giriş Yap</button> <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="appScreen">
+  <div class="topbar">
+    <div class="topbar-title">🕌 Sıbyan Mektebi</div>
+    <button class="nav-btn active" onclick="showPage('dashboard')">📊 Panel</button>
+    <button class="nav-btn" onclick="showPage('students')">👨‍🎓 Öğrenciler</button>
+    <button class="nav-btn" onclick="showPage('classes')">🏫 Sınıflar</button>
+    <button class="nav-btn" onclick="showPage('attendance')">📋 Devamsızlık</button>
+    <button class="nav-btn" onclick="showPage('curriculum')">📚 Müfredat</button>
+    <button class="nav-btn" onclick="showPage('rewards')">🏆 Ödüller</button>
+    <button class="nav-btn" onclick="showPage('programs')">📅 Program</button>
+    <button class="nav-btn" onclick="showPage('parents')">📲 Veli Bilgilendirme</button>
+    <button class="nav-btn tv-btn" onclick="openTV()">📺 TV</button>
+    <button class="btn-logout" onclick="doLogout()">Çıkış</button>
+  </div>
+  <div class="main-area">
+
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">📊 Genel Bakış</div>
+        <div id="dashDate" class="text-muted fs-13"></div>
+      </div>
+      <div class="grid4 mb-16" id="dashStats"></div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">🏆 Bu Haftanın Öğrencisi</div>
+          <div id="weeklyChampion" class="text-center" style="padding:10px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🌟 Ayin Öğrencisi</div>
+          <div id="monthlyChampion" class="text-center" style="padding:10px"></div>
+        </div>
+      </div>
+      <div class="card mt-16">
+        <div class="card-title">📈 Sıralama (Toplam Puan)</div>
+        <div id="dashLeaderboard"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-students">
+      <div class="page-header">
+        <div class="page-title">👨‍🎓 Öğrenciler</div>
+        <div class="flex gap-8">
+          <input id="studentSearch" type="text" placeholder="Ara..." style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);width:180px;font-family:'Tajawal',sans-serif;" oninput="renderStudents()">
+          <button class="btn btn-primary" onclick="openStudentModal()">+ Öğrenci Ekle</button>
+        </div>
+      </div>
+      <div id="studentGrid" class="grid4"></div>
+    </div>
+
+    <div class="page" id="page-classes">
+      <div class="page-header">
+        <div class="page-title">🏫 Sınıflar</div>
+        <button class="btn btn-primary" onclick="openClassModal()">+ Sınıf Ekle</button>
+      </div>
+      <div id="classGrid" class="grid3"></div>
+    </div>
+
+    <div class="page" id="page-attendance">
+      <div class="page-header">
+        <div class="page-title">📋 Devamsızlık Takibi</div>
+        <div class="flex gap-8 items-center">
+          <select id="attClassFilter" onchange="renderAttendance()" style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Tajawal',sans-serif;">
+            <option value="">Tüm Sınıflar</option>
+          </select>
+          <input type="date" id="attDate" style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);">
+          <button class="btn btn-primary" onclick="renderAttendance()">Görüntüle</button>
+        </div>
+      </div>
+      <div id="attendanceTable"></div>
+    </div>
+
+    <div class="page" id="page-curriculum">
+      <div class="page-header">
+        <div class="page-title">📚 Müfredat</div>
+        <button class="btn btn-primary" onclick="openLessonModal()">+ Ders Ekle</button>
+      </div>
+      <div class="card mb-16">
+        <div class="card-title">Sınıf ve Hafta Seçimi</div>
+        <div class="flex gap-8 items-center flex-wrap">
+          <select id="currClassSel" onchange="renderCurriculum()" style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Tajawal',sans-serif;">
+            <option value="">Sınıf Seçin</option>
+          </select>
+          <div id="weekTabs" class="flex gap-8 flex-wrap"></div>
+        </div>
+      </div>
+      <div id="curriculumContent"></div>
+    </div>
+
+    <div class="page" id="page-rewards">
+      <div class="page-header">
+        <div class="page-title">🏆 Ödül Sistemi</div>
+        <button class="btn btn-gold" onclick="openAwardModal()">+ Puan Ver</button>
+      </div>
+      <div class="grid3 mb-16">
+        <div class="card">
+          <div class="card-title">📅 Bu Hafta</div>
+          <div id="weeklyBoard"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📆 Bu Ay</div>
+          <div id="monthlyBoard"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">☀️ Yaz Toplamı</div>
+          <div id="summerBoard"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📜 Son Puan İşlemleri</div>
+        <div id="rewardLog"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-programs">
+      <div class="page-header">
+        <div class="page-title">📅 Program & Etkinlikler</div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">🕐 Günlük Program
+            <button class="btn btn-sm btn-primary" onclick="openDailyProgramModal()" style="margin-left:10px">Düzenle</button>
+          </div>
+          <div id="dailyProgramList"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📆 Haftalık Etkinlikler
+            <button class="btn btn-sm btn-primary" onclick="openWeeklyEventModal()" style="margin-left:10px">Ekle</button>
+          </div>
+          <div id="weeklyEventList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-parents">
+      <div class="page-header">
+        <div class="page-title">📲 Veli Bilgilendirme Sistemi</div>
+      </div>
+      <div class="card mb-16">
+        <div class="card-title">Sınıf Filtresi</div>
+        <select id="parentClassFilter" onchange="renderParentTab()" style="padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); width:250px;">
+          <option value="">Tüm Sınıflar</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-title">Öğrenci Listesi ve Hızlı WhatsApp Bildirimleri</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Öğrenci Adı</th>
+                <th>Sınıfı</th>
+                <th>Veli Bilgisi</th>
+                <th>Yurda Giriş</th>
+                <th>Ders Bildirim Durumu</th>
+                <th>Etkinlik Paylaşımı</th>
+                <th>Eve Gönderim</th>
+              </tr>
+            </thead>
+            <tbody id="parentNotificationTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="tvScreen">
+  <button class="tv-close" onclick="closeTV()">✕ Kapat</button>
+  <div class="tv-content">
+    <div class="tv-header">
+      <div class="tv-school-name">🕌 Yazıcızade Sıbyan Mektebi</div>
+      <div class="tv-date" id="tvDate"></div>
+    </div>
+    <div class="tv-body">
+      <div class="tv-panel">
+        <div class="tv-panel-title">🕐 Günlük Program</div>
+        <div id="tvDailyProgram"></div>
+      </div>
+      <div class="tv-panel">
+        <div class="tv-panel-title">🌟 Haftanın Öğrencisi</div>
+        <div id="tvWeeklyChampion" class="tv-student-hero"></div>
+        <hr style="border-color:rgba(201,168,76,.2);margin:16px 0">
+        <div class="tv-panel-title" style="font-size:16px">🏆 Ayın Öğrencisi</div>
+        <div id="tvMonthlyChampion" class="tv-student-hero"></div>
+      </div>
+      <div class="tv-panel">
+        <div class="tv-panel-title">📆 Haftalık Etkinlikler</div>
+        <div id="tvWeeklyEvents"></div>
+        <hr style="border-color:rgba(201,168,76,.2);margin:16px 0">
+        <div class="tv-panel-title" style="font-size:16px">🏆 Top 3</div>
+        <div id="tvTop3"></div>
+      </div>
+    </div>
+    <div class="tv-ticker"><span class="tv-ticker-inner" id="tvTicker">Yazıcızade Sıbyan Mektebi Öğrenci Takip Sistemi • Hoş Geldiniz</span></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="studentModal">
+  <div class="modal" style="width:700px">
+    <div class="modal-title" id="studentModalTitle">👨‍🎓 Yeni Öğrenci</div>
+    <div class="grid2">
+      <div>
+        <div class="form-group">
+          <label>Adı Soyadı *</label>
+          <input id="sName" type="text" placeholder="Ad Soyad">
+        </div>
+        <div class="form-group">
+          <label>Doğum Tarihi</label>
+          <input id="sBirth" type="date">
+        </div>
+        <div class="form-group">
+          <label>Sınıf</label>
+          <select id="sClass"></select>
+        </div>
+        <div class="form-group">
+          <label>Anne Adı</label>
+          <input id="sMother" type="text">
+        </div>
+        <div class="form-group">
+          <label>Anne Tel</label>
+          <input id="sMotherTel" type="tel">
+        </div>
+        <div class="form-group">
+          <label>Baba Adı</label>
+          <input id="sFather" type="text">
+        </div>
+        <div class="form-group">
+          <label>Baba Tel</label>
+          <input id="sFatherTel" type="tel">
+        </div>
+        <div class="form-group">
+          <label>Baba Mesleği</label>
+          <input id="sFatherJob" type="text">
+        </div>
+      </div>
+      <div>
+        <div class="form-group">
+          <label>Fotoğraf</label>
+          <div class="photo-upload-area" onclick="document.getElementById('sPhotoInput').click()">
+            <img id="sPhotoPreview" class="photo-preview" src="" style="display:none">
+            <div class="photo-placeholder" id="sPhotoPlaceholder">📷</div>
+            <div style="font-size:12px;color:var(--text-muted)">Fotoğraf yükle</div>
+          </div>
+          <input type="file" id="sPhotoInput" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+        </div>
+        <div class="form-group">
+          <label>İl</label>
+          <input id="sCity" type="text" placeholder="İl" oninput="updateAddressPreview()">
+        </div>
+        <div class="form-group">
+          <label>İlçe</label>
+          <input id="sDistrict" type="text" placeholder="İlçe" oninput="updateAddressPreview()">
+        </div>
+        <div class="form-group">
+          <label>Mahalle</label>
+          <input id="sNeighborhood" type="text" placeholder="Mahalle" oninput="updateAddressPreview()">
+        </div>
+        <div class="form-group">
+          <label>Sokak / No</label>
+          <input id="sStreet" type="text" placeholder="Sokak / Kapı No" oninput="updateAddressPreview()">
+        </div>
+        <div class="form-group">
+          <label>Tam Adres (Önizleme)</label>
+          <textarea id="sAddress" rows="3" readonly style="background:var(--bg);color:var(--text-muted);font-size:12px;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="closeModal('studentModal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveStudent()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="classModal">
+  <div class="modal" style="width:450px">
+    <div class="modal-title">🏫 Yeni Sınıf</div>
+    <div class="form-group">
+      <label>Sınıf Adı *</label>
+      <input id="className" type="text" placeholder="Örn: Elif Sınıfı, 1. Sınıf">
+    </div>
+    <div class="form-group">
+      <label>Hoca / Öğretmen</label>
+      <input id="classTeacher" type="text" placeholder="Hoca adı">
+    </div>
+    <div class="form-group">
+      <label>Açıklama</label>
+      <input id="classDesc" type="text" placeholder="Opsiyonel">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="closeModal('classModal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveClass()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="awardModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-title">🏆 Puan Ver</div>
+    <div class="form-group">
+      <label>Öğrenci</label>
+      <select id="awardStudent"></select>
+    </div>
+    <div class="form-group">
+      <label>Kategori</label>
+      <select id="awardCategory">
+        <option value="saygi">🤲 Saygı</option>
+        <option value="uyum">🤝 Arkadaşlarla Uyum</option>
+        <option value="yemek">🍽️ Yemek</option>
+        <option value="namaz">🕌 Namaz</option>
+        <option value="temizlik">🧹 Temizlik</option>
+        <option value="ders">📚 Ders</option>
+        <option value="devamsizlik">📋 Devamsızlık</option>
+        <option value="diger">✨ Diğer</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Puan</label>
+      <input id="awardPoints" type="number" value="5" min="1" max="100">
+    </div>
+    <div class="form-group">
+      <label>Not (Opsiyonel)</label>
+      <input id="awardNote" type="text" placeholder="Açıklama...">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="closeModal('awardModal')">İptal</button>
+      <button class="btn btn-gold" onclick="saveAward()">Puan Ver</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="lessonModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-title">📚 Ders Ekle</div>
+    <div class="form-group">
+      <label>Sınıf</label>
+      <select id="lessonClass"></select>
+    </div>
+    <div class="form-group">
+      <label>Hafta No</label>
+      <input id="lessonWeek" type="number" min="1" max="40" value="1">
+    </div>
+    <div class="form-group">
+      <label>Ders Adı *</label>
+      <input id="lessonName" type="text" placeholder="Örn: Kuran-ı Kerim 3. Sure">
+    </div>
+    <div class="form-group">
+      <label>Gün</label>
+      <select id="lessonDay">
+        <option>Pazartesi</option>
+        <option>Salı</option>
+        <option>Çarşamba</option>
+        <option>Perşembe</option>
+        <option>Cuma</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="closeModal('lessonModal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveLesson()">Ekle</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dailyProgramModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-title">🕐 Günlük Program Düzenle</div>
+    <div id="dailyProgramEditor"></div>
+    <div class="flex gap-8 mt-16">
+      <input id="dpTime" type="time" style="padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);flex:0 0 100px">
+      <input id="dpActivity" type="text" placeholder="Etkinlik adı" style="flex:1;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Tajawal',sans-serif;">
+      <button class="btn btn-primary" onclick="addDailyItem()">Ekle</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('dailyProgramModal')">Tamam</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="weeklyEventModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-title">📆 Haftalık Etkinlik Ekle</div>
+    <div class="form-group">
+      <label>Gün</label>
+      <select id="weDaySelect">
+        <option>Pazartesi</option><option>Salı</option><option>Çarşamba</option>
+        <option>Perşembe</option><option>Cuma</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Etkinlik Adı</label>
+      <input id="weTitle" type="text" placeholder="Etkinlik adı">
+    </div>
+    <div class="form-group">
+      <label>Açıklama</label>
+      <input id="weDesc" type="text" placeholder="Opsiyonel açıklama">
+    </div>
+    <div class="form-group">
+      <label>Etkinlik Fotoğrafı</label>
+      <input id="wePhoto" type="file" accept="image/*" style="padding: 5px;">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="closeModal('weeklyEventModal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveWeeklyEvent()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="studentDetailModal">
+  <div class="modal" style="width:600px">
+    <div class="modal-title" id="studentDetailTitle"></div>
+    <div id="studentDetailContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="studentDeleteBtn">Sil</button>
+      <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="closeModal('studentDetailModal')">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== DATA ==========
+let DB = {
+  classes: [],
+  students: [],
+  attendance: {}, 
+  curriculum: {}, 
+  rewards: [], 
+  dailyProgram: [],
+  weeklyEvents: [], 
+  editStudentId: null,
+  currWeek: 1,
+};
+
+const AWARD_CATS = {
+  saygi:'🤲 Saygı',
+  uyum:'🤝 Uyum',
+  yemek:'🍽️ Yemek',
+  namaz:'🕌 Namaz',
+  temizlik:'🧹 Temizlik',
+  ders:'📚 Ders',
+  devamsizlik:'📋 Devamsızlık',
+  diger:'✨ Diğer'
+};
+
+function save() {
+  localStorage.setItem('sibyanDB', JSON.stringify(DB));
+}
+
+function load() {
+  const d = localStorage.getItem('sibyanDB');
+  if (d) DB = JSON.parse(d);
+}
+
+// ========== LOGIN ==========
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  if (u === 'yazicizade' && p === '1234') {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'flex';
+    initApp();
+  } else {
+    document.getElementById('loginErr').textContent = 'Kullanıcı adı veya şifre hatalı!';
+  }
+}
+
+function doLogout() {
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ========== INIT ==========
+function initApp() {
+  load();
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('attDate').value = today;
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('tr-TR', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  refreshClassSelects();
+  refreshParentClassSelect();
+  renderDashboard();
+  renderStudents();
+  renderClasses();
+  renderAttendance();
+  renderCurriculumWeekTabs();
+  renderRewards();
+  renderPrograms();
+}
+
+// ========== NAVIGATION ==========
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  
+  const pageElement = document.getElementById('page-' + id);
+  if(pageElement) pageElement.classList.add('active');
+  
+  const menuIndex = ['dashboard','students','classes','attendance','curriculum','rewards','programs','parents'].indexOf(id);
+  if(menuIndex !== -1 && document.querySelectorAll('.topbar .nav-btn')[menuIndex]) {
+    document.querySelectorAll('.topbar .nav-btn')[menuIndex].classList.add('active');
+  }
+
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'students') renderStudents();
+  if (id === 'classes') renderClasses();
+  if (id === 'attendance') renderAttendance();
+  if (id === 'curriculum') renderCurriculumWeekTabs();
+  if (id === 'rewards') renderRewards();
+  if (id === 'programs') renderPrograms();
+  if (id === 'parents') { refreshParentClassSelect(); renderParentTab(); }
+}
+
+// ========== MODALS ==========
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ========== TOAST ==========
+function showToast(msg, type='green') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'green' ? 'var(--green)' : type === 'gold' ? 'var(--gold)' : 'var(--red)';
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+// ========== ADDRESS ==========
+function updateAddressPreview() {
+  const city = document.getElementById('sCity').value;
+  const dist = document.getElementById('sDistrict').value;
+  const neigh = document.getElementById('sNeighborhood').value;
+  const street = document.getElementById('sStreet').value;
+  const parts = [neigh, street, dist, city].filter(Boolean);
+  document.getElementById('sAddress').value = parts.join(', ');
+}
+
+// ========== PHOTO ==========
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const prev = document.getElementById('sPhotoPreview');
+      prev.src = e.target.result;
+      prev.style.display = 'block';
+      document.getElementById('sPhotoPlaceholder').style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// ========== CLASSES ==========
+function openClassModal() {
+  document.getElementById('className').value = '';
+  document.getElementById('classTeacher').value = '';
+  document.getElementById('classDesc').value = '';
+  openModal('classModal');
+}
+
+function saveClass() {
+  const name = document.getElementById('className').value.trim();
+  const teacher = document.getElementById('classTeacher').value.trim();
+  const desc = document.getElementById('classDesc').value.trim();
+  if(!name) { showToast('Sınıf adı zorunludur!','red'); return; }
+  
+  const newClass = { id: 'c_' + Date.now(), name, teacher, desc };
+  DB.classes.push(newClass);
+  save();
+  closeModal('classModal');
+  refreshClassSelects();
+  refreshParentClassSelect();
+  renderClasses();
+  showToast('Sınıf başarıyla eklendi');
+}
+
+function renderClasses() {
+  const grid = document.getElementById('classGrid');
+  grid.innerHTML = '';
+  if(DB.classes.length === 0) {
+    grid.innerHTML = '<div class="text-muted">Henüz sınıf eklenmemiş.</div>';
+    return;
+  }
+  DB.classes.forEach(c => {
+    const count = DB.students.filter(s => s.classId === c.id).length;
+    grid.innerHTML += `
+      <div class="card">
+        <div class="card-title" style="font-size:17px;color:var(--gold)">${c.name}</div>
+        <div style="font-size:13px;margin-bottom:6px;"><span class="text-muted">Hoca:</span> ${c.teacher || 'Belirlenmedi'}</div>
+        <div style="font-size:13px;margin-bottom:12px;"><span class="text-muted">Açıklama:</span> ${c.desc || '—'}</div>
+        <div class="badge badge-blue" style="font-size:12px">${count} Öğrenci</div>
+      </div>
+    `;
+  });
+}
+
+function refreshClassSelects() {
+  const sc = document.getElementById('sClass');
+  const cc = document.getElementById('currClassSel');
+  const lc = document.getElementById('lessonClass');
+  const ac = document.getElementById('attClassFilter');
+  
+  let opts = '<option value="">Seçiniz...</option>';
+  DB.classes.forEach(c => { opts += `<option value="${c.id}">${c.name}</option>`; });
+  
+  if(sc) sc.innerHTML = opts;
+  if(lc) lc.innerHTML = opts;
+  if(cc) {
+    cc.innerHTML = '<option value="">Sınıf Seçin</option>';
+    DB.classes.forEach(c => { cc.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+  }
+  if(ac) {
+    ac.innerHTML = '<option value="">Tüm Sınıflar</option>';
+    DB.classes.forEach(c => { ac.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+  }
+}
+
+// ========== STUDENTS ==========
+function openStudentModal() {
+  document.getElementById('studentModalTitle').textContent = '👨‍🎓 Yeni Öğrenci';
+  document.getElementById('sName').value = '';
+  document.getElementById('sBirth').value = '';
+  document.getElementById('sClass').value = '';
+  document.getElementById('sMother').value = '';
+  document.getElementById('sMotherTel').value = '';
+  document.getElementById('sFather').value = '';
+  document.getElementById('sFatherTel').value = '';
+  document.getElementById('sFatherJob').value = '';
+  document.getElementById('sCity').value = '';
+  document.getElementById('sDistrict').value = '';
+  document.getElementById('sNeighborhood').value = '';
+  document.getElementById('sStreet').value = '';
+  document.getElementById('sAddress').value = '';
+  document.getElementById('sPhotoPreview').src = '';
+  document.getElementById('sPhotoPreview').style.display = 'none';
+  document.getElementById('sPhotoPlaceholder').style.display = 'block';
+  document.getElementById('sPhotoInput').value = '';
+  DB.editStudentId = null;
+  openModal('studentModal');
+}
+
+function saveStudent() {
+  const name = document.getElementById('sName').value.trim();
+  if(!name) { showToast('Ad soyad zorunludur!','red'); return; }
+  
+  const studentData = {
+    id: DB.editStudentId || 's_' + Date.now(),
+    name,
+    birth: document.getElementById('sBirth').value,
+    classId: document.getElementById('sClass').value,
+    anneAdi: document.getElementById('sMother').value.trim(),
+    anneTel: document.getElementById('sMotherTel').value.trim(),
+    babaAdi: document.getElementById('sFather').value.trim(),
+    babaTel: document.getElementById('sFatherTel').value.trim(),
+    babaMeslek: document.getElementById('sFatherJob').value.trim(),
+    city: document.getElementById('sCity').value.trim(),
+    district: document.getElementById('sDistrict').value.trim(),
+    neighborhood: document.getElementById('sNeighborhood').value.trim(),
+    street: document.getElementById('sStreet').value.trim(),
+    address: document.getElementById('sAddress').value,
+    photo: document.getElementById('sPhotoPreview').style.display === 'block' ? document.getElementById('sPhotoPreview').src : ''
+  };
+  
+  if(DB.editStudentId) {
+    const idx = DB.students.findIndex(s => s.id === DB.editStudentId);
+    if(idx !== -1) DB.students[idx] = studentData;
+  } else {
+    DB.students.push(studentData);
+  }
+  
+  save();
+  closeModal('studentModal');
+  renderStudents();
+  refreshAwardStudentSelect();
+  showToast('Öğrenci kaydı tamamlandı');
+}
+
+function renderStudents() {
+  const grid = document.getElementById('studentGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const search = document.getElementById('studentSearch').value.toLowerCase().trim();
+  
+  const filtered = DB.students.filter(s => s.name.toLowerCase().includes(search));
+  if(filtered.length === 0) {
+    grid.innerHTML = '<div class="text-muted">Öğrenci bulunamadı.</div>';
+    return;
+  }
+  
+  filtered.forEach(s => {
+    const c = DB.classes.find(cls => cls.id === s.classId);
+    const cName = c ? c.name : 'Sınıfsız';
+    const defPhoto = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2235%22 r=%2225%22 fill=%22%23c9a84c%22/><circle cx=%2250%22 cy=%22105%22 r=%2245%22 fill=%22%23c9a84c%22/></svg>';
+    
+    grid.innerHTML += `
+      <div class="student-card" onclick="openStudentDetail('${s.id}')">
+        <img class="student-avatar" src="${s.photo || defPhoto}">
+        <div class="student-name">${s.name}</div>
+        <div class="student-class">${cName}</div>
+      </div>
+    `;
+  });
+}
+
+function openStudentDetail(id) {
+  const s = DB.students.find(st => st.id === id);
+  if(!s) return;
+  const c = DB.classes.find(cls => cls.id === s.classId);
+  
+  document.getElementById('studentDetailTitle').innerHTML = `👨‍🎓 Öğrenci Detayı`;
+  let pts = getStudentPoints(s.id);
+  
+  const defPhoto = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2235%22 r=%2225%22 fill=%22%23c9a84c%22/><circle cx=%2250%22 cy=%22105%22 r=%2245%22 fill=%22%23c9a84c%22/></svg>';
+
+  document.getElementById('studentDetailContent').innerHTML = `
+    <div style="display:flex;gap:20px;margin-bottom:16px;">
+      <img src="${s.photo || defPhoto}" style="width:90px;height:90px;object-fit:cover;border-radius:50%;border:2px solid var(--gold)">
+      <div>
+        <h3 style="color:var(--gold);margin-bottom:4px">${s.name}</h3>
+        <p style="font-size:13px"><span class="text-muted">Sınıf:</span> ${c?c.name:'Sınıfsız'}</p>
+        <p style="font-size:13px"><span class="text-muted">Doğum T.:</span> ${s.birth || '—'}</p>
+        <p style="font-size:14px;margin-top:6px;font-weight:700;color:var(--gold-light)">⭐ Toplam Puan: ${pts.total} Puan</p>
+      </div>
+    </div>
+    <div class="grid2" style="font-size:13px;border-top:1px solid var(--border);padding-top:12px">
+      <div>
+        <p><b>Anne Adı:</b> ${s.anneAdi || '—'}</p>
+        <p><b>Anne Tel:</b> ${s.anneTel || '—'}</p>
+        <p><b>Baba Adı:</b> ${s.babaAdi || '—'}</p>
+        <p><b>Baba Tel:</b> ${s.babaTel || '—'}</p>
+      </div>
+      <div>
+        <p><b>Baba Mesleği:</b> ${s.babaMeslek || '—'}</p>
+        <p><b>Adres:</b> ${s.address || '—'}</p>
+      </div>
+    </div>
+    <div style="margin-top:16px; text-align:right">
+       <button class="btn btn-sm btn-gold" onclick="editStudent('${s.id}')">Düzenle / Bilgileri Güncelle</button>
+    </div>
+  `;
+  
+  document.getElementById('studentDeleteBtn').onclick = () => {
+    if(confirm('Öğrenciyi silmek istediğinize emin misiniz? Puan verileri de silinecektir.')) {
+      DB.students = DB.students.filter(st => st.id !== id);
+      DB.rewards = DB.rewards.filter(r => r.studentId !== id);
+      save();
+      closeModal('studentDetailModal');
+      renderStudents();
+      showToast('Öğrenci silindi','red');
+    }
+  };
+  
+  openModal('studentDetailModal');
+}
+
+function editStudent(id) {
+  closeModal('studentDetailModal');
+  const s = DB.students.find(st => st.id === id);
+  if(!s) return;
+  
+  document.getElementById('studentModalTitle').textContent = '📝 Öğrenciyi Düzenle';
+  document.getElementById('sName').value = s.name;
+  document.getElementById('sBirth').value = s.birth || '';
+  document.getElementById('sClass').value = s.classId || '';
+  document.getElementById('sMother').value = s.anneAdi || '';
+  document.getElementById('sMotherTel').value = s.anneTel || '';
+  document.getElementById('sFather').value = s.babaAdi || '';
+  document.getElementById('sFatherTel').value = s.babaTel || '';
+  document.getElementById('sFatherJob').value = s.babaMeslek || '';
+  document.getElementById('sCity').value = s.city || '';
+  document.getElementById('sDistrict').value = s.district || '';
+  document.getElementById('sNeighborhood').value = s.neighborhood || '';
+  document.getElementById('sStreet').value = s.street || '';
+  document.getElementById('sAddress').value = s.address || '';
+  
+  if(s.photo) {
+    document.getElementById('sPhotoPreview').src = s.photo;
+    document.getElementById('sPhotoPreview').style.display = 'block';
+    document.getElementById('sPhotoPlaceholder').style.display = 'none';
+  } else {
+    document.getElementById('sPhotoPreview').style.display = 'none';
+    document.getElementById('sPhotoPlaceholder').style.display = 'block';
+  }
+  
+  DB.editStudentId = id;
+  openModal('studentModal');
+}
+
+// ========== ATTENDANCE ==========
+function renderAttendance() {
+  const filterClass = document.getElementById('attClassFilter').value;
+  const date = document.getElementById('attDate').value;
+  const wrap = document.getElementById('attendanceTable');
+  if(!wrap) return;
+  if(!date) { wrap.innerHTML = '<div class="text-muted">Lütfen tarih seçin.</div>'; return; }
+  
+  const targetStudents = DB.students.filter(s => !filterClass || s.classId === filterClass);
+  if(targetStudents.length === 0) {
+    wrap.innerHTML = '<div class="text-muted">Bu filtreye uygun öğrenci bulunamadı.</div>';
+    return;
+  }
+  
+  let html = `
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Öğrenci Adı</th><th>Sınıfı</th><th>Devamsızlık Durumu (Değiştirmek İçin Tıklayın)</th></tr>
+          </thead>
+          <tbody>
+  `;
+  
+  targetStudents.forEach(s => {
+    const c = DB.classes.find(cls => cls.id === s.classId);
+    const key = `${date}_${s.id}`;
+    const status = DB.attendance[key] || 'none';
+    
+    let btnClass = 'att-none';
+    let lbl = 'Yoklama Alınmadı';
+    if(status === 'present') { btnClass = 'att-present'; lbl = '✓ Geldi'; }
+    if(status === 'absent') { btnClass = 'att-absent'; lbl = '✕ Gelmedi'; }
+    if(status === 'excused') { btnClass = 'att-excused'; lbl = 'İzinli'; }
+    if(status === 'sick') { btnClass = 'att-sick'; lbl = 'Raporlu / Hasta'; }
+    
+    html += `
+      <tr>
+        <td style="font-weight:600">${s.name}</td>
+        <td><span class="badge badge-blue">${c?c.name:'—'}</span></td>
+        <td><button class="att-status ${btnClass}" onclick="toggleAttendance('${date}','${s.id}')">${lbl}</button></td>
+      </tr>
+    `;
+  });
+  
+  html += `</tbody></table></div></div>`;
+  wrap.innerHTML = html;
+}
+
+function toggleAttendance(date, sId) {
+  const key = `${date}_${sId}`;
+  const current = DB.attendance[key] || 'none';
+  const flow = { 'none':'present', 'present':'absent', 'absent':'excused', 'excused':'sick', 'sick':'present' };
+  DB.attendance[key] = flow[current];
+  save();
+  renderAttendance();
+}
+
+// ========== CURRICULUM ==========
+function openLessonModal() {
+  document.getElementById('lessonName').value = '';
+  document.getElementById('lessonWeek').value = DB.currWeek || 1;
+  openModal('lessonModal');
+}
+
+function saveLesson() {
+  const classId = document.getElementById('lessonClass').value;
+  const week = parseInt(document.getElementById('lessonWeek').value) || 1;
+  const name = document.getElementById('lessonName').value.trim();
+  const day = document.getElementById('lessonDay').value;
+  
+  if(!classId || !name) { showToast('Sınıf ve ders adı zorunludur!','red'); return; }
+  
+  const key = `${classId}_${week}`;
+  if(!DB.curriculum[key]) DB.curriculum[key] = [];
+  
+  DB.curriculum[key].push({ name, day, done: false });
+  save();
+  closeModal('lessonModal');
+  renderCurriculum();
+  showToast('Ders müfredata eklendi');
+}
+
+function renderCurriculumWeekTabs() {
+  const wrap = document.getElementById('weekTabs');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  for(let i=1; i<=12; i++) {
+    const act = DB.currWeek === i ? 'active' : '';
+    wrap.innerHTML += `<button class="week-tab ${act}" onclick="setCurrWeek(${i})">${i}. Hafta</button>`;
+  }
+  renderCurriculum();
+}
+
+function setCurrWeek(w) {
+  DB.currWeek = w;
+  renderCurriculumWeekTabs();
+}
+
+function renderCurriculum() {
+  const classId = document.getElementById('currClassSel').value;
+  const content = document.getElementById('curriculumContent');
+  if(!content) return;
+  if(!classId) { content.innerHTML = '<div class="text-muted">Lütfen listeden bir sınıf seçiniz.</div>'; return; }
+  
+  const key = `${classId}_${DB.currWeek}`;
+  const list = DB.curriculum[key] || [];
+  
+  const days = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma'];
+  let html = `<div class="grid4" style="grid-template-columns: repeat(5, 1fr)">`;
+  
+  days.forEach(d => {
+    const dayLessons = list.filter(l => l.day === d);
+    let dHtml = `<div class="card" style="padding:14px; min-height:200px">
+      <div class="card-title" style="border-bottom:1px solid var(--border);padding-bottom:6px;color:var(--gold)">${d}</div>`;
+    
+    if(dayLessons.length === 0) {
+      dHtml += '<div class="text-muted" style="font-size:12px;margin-top:10px">Ders yok</div>';
+    } else {
+      dayLessons.forEach((l, idx) => {
+        const fullIdx = list.indexOf(l);
+        const chk = l.done ? 'checked' : '';
+        const doneClass = l.done ? 'done' : '';
+        dHtml += `
+          <div class="lesson-check">
+            <input type="checkbox" ${chk} onchange="toggleLessonDone('${classId}', ${DB.currWeek}, ${fullIdx})">
+            <label class="${doneClass}">${l.name}</label>
+          </div>
+        `;
+      });
+    }
+    dHtml += `</div>`;
+    html += dHtml;
+  });
+  
+  html += `</div>`;
+  content.innerHTML = html;
+}
+
+function toggleLessonDone(classId, week, idx) {
+  const key = `${classId}_${week}`;
+  if(DB.curriculum[key] && DB.curriculum[key][idx]) {
+    DB.curriculum[key][idx].done = !DB.curriculum[key][idx].done;
+    save();
+    renderCurriculum();
+  }
+}
+
+// ========== REWARDS ==========
+function refreshAwardStudentSelect() {
+  const sel = document.getElementById('awardStudent');
+  if(!sel) return;
+  sel.innerHTML = '';
+  DB.students.forEach(s => { sel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
+}
+
+function openAwardModal() {
+  refreshAwardStudentSelect();
+  document.getElementById('awardNote').value = '';
+  openModal('awardModal');
+}
+
+function saveAward() {
+  const studentId = document.getElementById('awardStudent').value;
+  const category = document.getElementById('awardCategory').value;
+  const points = parseInt(document.getElementById('awardPoints').value) || 0;
+  const note = document.getElementById('awardNote').value.trim();
+  
+  if(!studentId) { showToast('Öğrenci seçilmedi!','red'); return; }
+  
+  DB.rewards.push({
+    studentId, category, points, note,
+    date: new Date().toISOString()
+  });
+  save();
+  closeModal('awardModal');
+  renderRewards();
+  renderDashboard();
+  showToast(`Öğrenciye ${points} puan eklendi`,'gold');
+}
+
+function getStudentPoints(sId) {
+  let now = new Date();
+  let total = 0, week = 0, month = 0;
+  
+  // Bu haftanın başlangıcı (Pazartesi)
+  let startOfWeek = new Date(now);
+  let day = startOfWeek.getDay(), diff = startOfWeek.getDate() - day + (day == 0 ? -6:1);
+  startOfWeek.setDate(diff); startOfWeek.setHours(0,0,0,0);
+  
+  // Bu ayın başlangıcı
+  let startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  DB.rewards.forEach(r => {
+    if(r.studentId === sId) {
+      total += r.points;
+      let rDate = new Date(r.date);
+      if(rDate >= startOfWeek) week += r.points;
+      if(rDate >= startOfMonth) month += r.points;
+    }
+  });
+  return { total, week, month };
+}
+
+function renderRewards() {
+  const wBoard = document.getElementById('weeklyBoard');
+  const mBoard = document.getElementById('monthlyBoard');
+  const sBoard = document.getElementById('summerBoard');
+  const log = document.getElementById('rewardLog');
+  
+  if(!wBoard) return;
+  
+  let list = DB.students.map(s => {
+    return { s, ...getStudentPoints(s.id) };
+  });
+  
+  // Haftalık
+  let wSorted = [...list].sort((a,b) => b.week - a.week).slice(0, 5);
+  wBoard.innerHTML = wSorted.map(i => `<div style="font-size:13px;margin-bottom:6px;display:flex;justify-content:between"><span>${i.s.name}</span><b class="text-gold">${i.week} p</b></div>`).join('') || 'Puan yok';
+  
+  // Aylık
+  let mSorted = [...list].sort((a,b) => b.month - a.month).slice(0, 5);
+  mBoard.innerHTML = mSorted.map(i => `<div style="font-size:13px;margin-bottom:6px;display:flex;justify-content:between"><span>${i.s.name}</span><b class="text-gold">${i.month} p</b></div>`).join('') || 'Puan yok';
+  
+  // Yaz Toplamı
+  let sSorted = [...list].sort((a,b) => b.total - a.total).slice(0, 5);
+  sBoard.innerHTML = sSorted.map(i => `<div style="font-size:13px;margin-bottom:6px;display:flex;justify-content:between"><span>${i.s.name}</span><b class="text-gold">${i.total} p</b></div>`).join('') || 'Puan yok';
+  
+  // Log
+  let logs = [...DB.rewards].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+  let logHtml = `<div class="table-wrap"><table><thead><tr><th>Öğrenci</th><th>Kategori</th><th>Puan</th><th>Not</th><th>Tarih</th></tr></thead><tbody>`;
+  logs.forEach(l => {
+    const s = DB.students.find(st => st.id === l.studentId);
+    logHtml += `<tr>
+      <td><b>${s?s.name:'Silinmiş'}</b></td>
+      <td><span class="badge badge-gold">${AWARD_CATS[l.category] || l.category}</span></td>
+      <td><b style="color:${l.points>=0?'var(--green-light)':'var(--red)'}">${l.points>=0?'+':''}${l.points}</b></td>
+      <td>${l.note || '—'}</td>
+      <td class="text-muted">${new Date(l.date).toLocaleDateString('tr-TR')}</td>
+    </tr>`;
+  });
+  logHtml += '</tbody></table></div>';
+  log.innerHTML = logs.length === 0 ? 'İşlem geçmişi bulunmuyor.' : logHtml;
+}
+
+// ========== PROGRAMS & EVENTS ==========
+function renderPrograms() {
+  const dpList = document.getElementById('dailyProgramList');
+  const weList = document.getElementById('weeklyEventList');
+  
+  if(!dpList) return;
+  
+  // Günlük
+  let sortedDp = [...DB.dailyProgram].sort((a,b) => a.time.localeCompare(b.time));
+  dpList.innerHTML = sortedDp.map(i => `
+    <div style="font-size:14px;padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:12px">
+      <span class="text-gold fw-600">${i.time}</span> <span>${i.activity}</span>
+    </div>
+  `).join('') || '<div class="text-muted">Program girilmemiş.</div>';
+  
+  // Haftalık
+  weList.innerHTML = DB.weeklyEvents.map((i, idx) => `
+    <div style="font-size:13px;padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:8px;position:relative;">
+      <b class="text-gold">[${i.day}]</b> <b>${i.title}</b>
+      <p class="text-muted" style="margin-top:2px">${i.desc || ''}</p>
+      ${i.photo ? `<img src="${i.photo}" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-top:6px;display:block;border:1px solid var(--border)">` : ''}
+      <button class="btn btn-danger btn-sm" onclick="deleteWeeklyEvent(${idx})" style="position:absolute;top:10px;right:10px;padding:2px 6px;">✕</button>
+    </div>
+  `).join('') || '<div class="text-muted">Etkinlik girilmemiş.</div>';
+}
+
+function openDailyProgramModal() {
+  renderDailyEditor();
+  openModal('dailyProgramModal');
+}
+
+function renderDailyEditor() {
+  const ed = document.getElementById('dailyProgramEditor');
+  let sortedDp = [...DB.dailyProgram].sort((a,b) => a.time.localeCompare(b.time));
+  ed.innerHTML = sortedDp.map((i, idx) => `
+    <div class="flex items-center justify-between mb-16" style="background:var(--surface2);padding:6px 12px;border-radius:6px">
+      <span><b class="text-gold">${i.time}</b> - ${i.activity}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeDailyItem(${DB.dailyProgram.indexOf(i)})">Sil</button>
+    </div>
+  `).join('');
+}
+
+function addDailyItem() {
+  const time = document.getElementById('dpTime').value;
+  const activity = document.getElementById('dpActivity').value.trim();
+  if(!time || !activity) return;
+  DB.dailyProgram.push({ time, activity });
+  save();
+  renderDailyEditor();
+  renderPrograms();
+  document.getElementById('dpActivity').value = '';
+}
+
+function removeDailyItem(idx) {
+  DB.dailyProgram.splice(idx, 1);
+  save();
+  renderDailyEditor();
+  renderPrograms();
+}
+
+function openWeeklyEventModal() {
+  document.getElementById('weTitle').value = '';
+  document.getElementById('weDesc').value = '';
+  document.getElementById('wePhoto').value = '';
+  openModal('weeklyEventModal');
+}
+
+// Fotoğraflı Etkinlik Kayıt Algoritması
+function saveWeeklyEvent() {
+  const day = document.getElementById('weDaySelect').value;
+  const title = document.getElementById('weTitle').value.trim();
+  const desc = document.getElementById('weDesc').value.trim();
+  const photoInput = document.getElementById('wePhoto');
+
+  if (!title) { showToast('Etkinlik adı boş olamaz!', 'red'); return; }
+
+  if (photoInput.files && photoInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      DB.weeklyEvents.push({ day, title, desc, photo: e.target.result });
+      save();
+      renderPrograms();
+      closeModal('weeklyEventModal');
+      showToast('Etkinlik fotoğraflı kaydedildi');
+    };
+    reader.readAsDataURL(photoInput.files[0]);
+  } else {
+    DB.weeklyEvents.push({ day, title, desc, photo: null });
+    save();
+    renderPrograms();
+    closeModal('weeklyEventModal');
+    showToast('Etkinlik kaydedildi');
+  }
+}
+
+function deleteWeeklyEvent(idx) {
+  DB.weeklyEvents.splice(idx, 1);
+  save();
+  renderPrograms();
+  showToast('Etkinlik silindi','red');
+}
+
+// ========== VELI BILGILENDIRME SİSTEMİ (YENİ) ==========
+function refreshParentClassSelect() {
+  const sel = document.getElementById('parentClassFilter');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Tüm Sınıflar</option>';
+  DB.classes.forEach(c => {
+    sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+  });
+}
+
+function renderParentTab() {
+  const filterClass = document.getElementById('parentClassFilter').value;
+  const tbody = document.getElementById('parentNotificationTable');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+
+  const targetStudents = DB.students.filter(s => !filterClass || s.classId === filterClass);
+
+  if(targetStudents.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Öğrenci bulunamadı.</td></tr>';
+    return;
+  }
+
+  tbody.forEach = targetStudents.forEach(s => {
+    const sClass = DB.classes.find(c => c.id === s.classId);
+    const className = sClass ? sClass.name : '—';
+    const parentName = s.babaAdi || s.anneAdi || 'Veli';
+    const parentTel = s.babaTel || s.anneTel || '';
+
+    // Günün işlenen (tiklenmiş) derslerini dinamik hesaplama
+    let checkedLessons = [];
+    if (s.classId) {
+      const weekKey = `${s.classId}_${DB.currWeek || 1}`;
+      if (DB.curriculum[weekKey]) {
+        checkedLessons = DB.curriculum[weekKey].filter(l => l.done).map(l => l.name);
+      }
+    }
+
+    // Bugün yapılan etkinlikleri çekme
+    const todayNum = new Date().getDay();
+    const daysArr = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+    const todayName = daysArr[todayNum];
+    const todaysEvents = DB.weeklyEvents.filter(e => e.day === todayName);
+
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-weight:600; color:var(--gold);">${s.name}</td>
+        <td><span class="badge badge-blue">${className}</span></td>
+        <td>${parentName} (${parentTel || 'Telefon Yok'})</td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="sendWhapp('${parentTel}', 'Sayın velimiz öğrenciniz &quot;${s.name}&quot; yurda giriş yapmıştır. Bilgilerinize.')">📥 Giriş Bildir</button>
+        </td>
+        <td>
+          <button class="btn btn-sm" style="background:var(--orange); color:#fff;" onclick="sendLessonReport('${parentTel}', '${s.name}', ${JSON.stringify(checkedLessons)})">📚 Dersleri Bildir</button>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-gold" onclick="sendEventReport('${parentTel}', ${JSON.stringify(todaysEvents)})">📸 Etkinlikleri Bildir</button>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-danger" onclick="sendWhapp('${parentTel}', 'Sayın velimiz öğrenciniz &quot;${s.name}&quot; evine güvenle gönderilmiştir. Hayırlı günler dileriz.')">🏠 Eve Gönder</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function sendWhapp(tel, text) {
+  if(!tel) { showToast('Kayıtlı veli telefonu bulunamadı!', 'red'); return; }
+  let cleanedTel = tel.replace(/\D/g, '');
+  if(!cleanedTel.startsWith('90') && cleanedTel.length === 10) { cleanedTel = '90' + cleanedTel; }
+  
+  const url = `https://api.whatsapp.com/send?phone=${cleanedTel}&text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
+function sendLessonReport(tel, studentName, lessonsArray) {
+  if(!lessonsArray || lessonsArray.length === 0) {
+    showToast('Bugün işlenmiş (tiklenmiş) ders bulunamadı!', 'orange');
+    return;
+  }
+  const text = `Sayın velimiz, öğrencimiz "${studentName}" bugün mektebimizde sırasıyla: \n- ${lessonsArray.join('\n- ')}\nkonulu derslerini başarıyla işlemiştir. Bilgilerinize.`;
+  sendWhapp(tel, text);
+}
+
+function sendEventReport(tel, events) {
+  if(!events || events.length === 0) {
+    showToast('Bugün için girilmiş bir etkinlik kaydı yok!', 'orange');
+    return;
+  }
+  
+  let text = `Sayın velimiz, mektebimizde bugün gerçekleştirilen etkinliklerimiz:\n`;
+  events.forEach((e, i) => {
+    text += `${i+1}) *${e.title}* ${e.desc ? '- ' + e.desc : ''}\n`;
+    if(e.photo) {
+      text += `[Etkinlik Fotoğrafı Sistemde Kayıtlıdır ve WhatsApp Web üzerinden görüntülenebilir]\n`;
+    }
+  });
+  
+  sendWhapp(tel, text);
+}
+
+// ========== DASHBOARD RENDERING ==========
+function renderDashboard() {
+  let stats = document.getElementById('dashStats');
+  if(!stats) return;
+  
+  let tStudents = DB.students.length;
+  let tClasses = DB.classes.length;
+  let tRewards = DB.rewards.length;
+  
+  stats.innerHTML = `
+    <div class="stat-card"><div class="stat-num">${tStudents}</div><div class="stat-label">Toplam Öğrenci</div></div>
+    <div class="stat-card"><div class="stat-num">${tClasses}</div><div class="stat-label">Toplam Sınıf</div></div>
+    <div class="stat-card"><div class="stat-num">${tRewards}</div><div class="stat-label">Puan Talebi / Ödül</div></div>
+    <div class="stat-card"><div class="stat-num">${DB.currWeek}. Hafta</div><div class="stat-label">Aktif Dönem</div></div>
+  `;
+  
+  let list = DB.students.map(s => { return { s, ...getStudentPoints(s.id) }; });
+  
+  let weekChamp = [...list].sort((a,b) => b.week - a.week)[0];
+  let monthChamp = [...list].sort((a,b) => b.month - a.month)[0];
+  
+  const defPhoto = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2235%22 r=%2225%22 fill=%22%23666%22/><circle cx=%2250%22 cy=%22105%22 r=%2245%22 fill=%22%23666%22/></svg>';
+
+  let wcEl = document.getElementById('weeklyChampion');
+  if(weekChamp && weekChamp.week > 0) {
+    wcEl.innerHTML = `<img src="${weekChamp.s.photo || defPhoto}" style="width:50px;height:50px;object-fit:cover;border-radius:50%;margin-bottom:6px"><div class="fw-600">${weekChamp.s.name}</div><div class="text-gold" style="font-size:13px">${weekChamp.week} Puan (Bu Hafta)</div>`;
+  } else { wcEl.innerHTML = '<div class="text-muted fs-13">Henüz puan yok</div>'; }
+  
+  let mcEl = document.getElementById('monthlyChampion');
+  if(monthChamp && monthChamp.month > 0) {
+    mcEl.innerHTML = `<img src="${monthChamp.s.photo || defPhoto}" style="width:50px;height:50px;object-fit:cover;border-radius:50%;margin-bottom:6px"><div class="fw-600">${monthChamp.s.name}</div><div class="text-gold" style="font-size:13px">${monthChamp.month} Puan (Bu Ay)</div>`;
+  } else { mcEl.innerHTML = '<div class="text-muted fs-13">Henüz puan yok</div>'; }
+  
+  // Sıralama Listesi (Panel Altı)
+  let sSorted = [...list].sort((a,b) => b.total - a.total).slice(0, 10);
+  document.getElementById('dashLeaderboard').innerHTML = sSorted.map((item, i) => `
+    <div class="rank-item">
+      <div class="rank-num ${i===0?'rank-1':i===1?'rank-2':'rank-3'}">${i+1}</div>
+      <img class="rank-avatar" src="${item.s.photo || defPhoto}">
+      <div class="rank-info">
+        <div class="rank-name">${item.s.name}</div>
+        <div class="rank-pts">⭐ ${item.total} puan</div>
+      </div>
+    </div>
+  `).join('') || '<div class="text-muted p-10">Öğrenci bulunmuyor.</div>';
+}
+
+// ========== TV MODULE ==========
+function openTV() {
+  document.getElementById('tvScreen').style.display = 'block';
+  let now = new Date();
+  document.getElementById('tvDate').textContent = now.toLocaleDateString('tr-TR', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  
+  // Program
+  let sortedDp = [...DB.dailyProgram].sort((a,b) => a.time.localeCompare(b.time));
+  document.getElementById('tvDailyProgram').innerHTML = sortedDp.map(i => `
+    <div class="tv-program-item"><span class="tv-time">${i.time}</span><span class="tv-act">${i.activity}</span></div>
+  `).join('') || 'Program girilmedi.';
+  
+  // Şampiyonlar ve Listeler
+  let list = DB.students.map(s => { return { s, ...getStudentPoints(s.id) }; });
+  let weekChamp = [...list].sort((a,b) => b.week - a.week)[0];
+  let monthChamp = [...list].sort((a,b) => b.month - a.month)[0];
+  
+  const defPhoto = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2235%22 r=%2225%22 fill=%22%23666%22/><circle cx=%2250%22 cy=%22105%22 r=%2245%22 fill=%22%23666%22/></svg>';
+
+  let tvW = document.getElementById('tvWeeklyChampion');
+  if(weekChamp && weekChamp.week > 0) {
+    tvW.innerHTML = `<img class="tv-hero-avatar" src="${weekChamp.s.photo || defPhoto}"><div class="tv-hero-name">${weekChamp.s.name}</div><div class="tv-hero-pts">Bu Hafta: ${weekChamp.week} Puan</div>`;
+  } else { tvW.innerHTML = '—'; }
+  
+  let tvM = document.getElementById('tvMonthlyChampion');
+  if(monthChamp && monthChamp.month > 0) {
+    tvM.innerHTML = `<img class="tv-hero-avatar" src="${monthChamp.s.photo || defPhoto}" style="width:80px;height:80px;"><div class="tv-hero-name" style="font-size:18px">${monthChamp.s.name}</div><div class="tv-hero-pts" style="font-size:13px">Bu Ay: ${monthChamp.month} Puan</div>`;
+  } else { tvM.innerHTML = '—'; }
+  
+  // Haftalık Etkinlikler
+  const todayNum = new Date().getDay();
+  const daysArr = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+  const todayName = daysArr[todayNum];
+  let todaysEvents = DB.weeklyEvents.filter(e => e.day === todayName);
+  
+  document.getElementById('tvWeeklyEvents').innerHTML = todaysEvents.map(i => `
+    <div class="tv-event-item"><b>${i.title}</b><br><span class="text-muted">${i.desc || ''}</span></div>
+  `).join('') || '<div class="text-muted" style="font-size:13px">Bugün için planlanan etkinlik yok.</div>';
+  
+  // Top 3 sıralaması
+  let top3 = [...list].sort((a,b) => b.total - a.total).slice(0, 3);
+  document.getElementById('tvTop3').innerHTML = top3.map((item, i) => `
+    <div class="rank-item" style="background:rgba(255,255,255,.04)">
+      <div class="rank-num ${i===0?'rank-1':i===1?'rank-2':'rank-3'}">${i+1}</div>
+      <img class="rank-avatar" src="${item.s.photo || defPhoto}">
+      <div class="rank-info">
+        <div class="rank-name">${item.s.name}</div>
+        <div class="rank-pts">⭐ ${item.total} puan</div>
+      </div>
+    </div>
+  `).join('') || 'Henüz öğrenci yok';
+
+  // Alttaki Kayan Yazı (Ticker) güncellemesi
+  const weekChampName = weekChamp && weekChamp.week > 0 ? weekChamp.s.name : '—';
+  const monthChampName = monthChamp && monthChamp.month > 0 ? monthChamp.s.name : '—';
+  document.getElementById('tvTicker').textContent = 
+    `Yazıcızade Sıbyan Mektebi • Haftanın Öğrencisi: ${weekChampName} • Ayın Öğrencisi: ${monthChampName} • Hayırlı Günler Dileriz.`;
+}
+
+function closeTV() {
+  document.getElementById('tvScreen').style.display = 'none';
+}
+
+// Sayfa yüklendiğinde LocalStorage kontrolü yapalım
+load();
+</script>
+</body>
+</html>
